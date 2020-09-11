@@ -30,4 +30,6 @@ void sobelFilter(const uint8_t *bits, m_bits &dst, int width, int height, int r,
 
 void Mat2Bits(const Mat2D &src, m_bits &bits);
 
+void Bits2Mat(const uint8_t *bits, Mat2D &dst, int width, int height);
+
 #endif//Canny_H

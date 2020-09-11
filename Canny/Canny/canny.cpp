@@ -1,6 +1,9 @@
 #include "canny.h"
 #include <algorithm>
+
 #define PI 3.1415926
+
+#define BYTE_ALIGN(w) (((w)+31)>>5)<<2
 
 #include <iostream>
 
@@ -24,13 +27,7 @@ vector<double> gaussian1D(int r, double sigma){
 //高斯滤波，分离为X方向和Y方向滤波
 //边缘进行对称处理
 void _gaussFilter(const uint8_t *bits, Mat2D &dst, int width, int height, int r, double sigma){
-    dst.resize(height,Mat1D(width));
-    for(int h=0;h<height;h++){
-        for(int w=0;w<width;w++){
-            int ptr = h*width+w;
-            dst[h][w] = bits[ptr];
-        }
-    }
+    Bits2Mat(bits, dst,width,height);
 
     Mat2D tmp(dst);
 
@@ -176,7 +173,8 @@ void _thresholdDeal(const Mat2D &src, Mat2D &dst, double T1, double T2){
 void gaussFilter(const uint8_t *bits, m_bits &dst, int width, int height, int r, double sigma){
     Mat2D guassImg;
     _gaussFilter(bits,guassImg,width,height,r,sigma);
-    return Mat2Bits(guassImg,dst);
+
+    Mat2Bits(guassImg,dst);
 }
 void sobelFilter(const uint8_t *bits, m_bits &dst, int width, int height, int r, double sigma){
     Mat2D guassImg;
@@ -200,12 +198,26 @@ void cannyOperator(const uint8_t *bits, m_bits &dst, int width, int height, int 
     Mat2Bits(result, dst);
 }
 void Mat2Bits(const Mat2D &src, m_bits &bits){
-    int H = src.size();
-    int W = src[0].size();
-    bits.resize(H*W);
-    for(int h=0;h<H;h++){
-        for(int w=0;w<W;w++){
+    int height = src.size();
+    int width = src[0].size();
+    //4-byte-align
+    int W = BYTE_ALIGN(width*8);
+
+    bits.resize(height*W);
+    for(int h=0;h<height;h++){
+        for(int w=0;w<width;w++){
             bits[h*W+w]=src[h][w];
+        }
+    }
+}
+void Bits2Mat(const uint8_t *bits, Mat2D &dst, int width, int height){
+    //4-byte-align
+    int W = BYTE_ALIGN(width*8);
+
+    dst.resize(height,Mat1D(width));
+    for(int h=0;h<height;h++){
+        for(int w=0;w<width;w++){
+            dst[h][w] = bits[h*W+w];
         }
     }
 }
